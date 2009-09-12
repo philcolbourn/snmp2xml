@@ -1,3 +1,5 @@
+#summary Real examples.
+
 = Usage Examples =
 
 SNMP data can be collected from a host using `snmpwalk`. To simplify processing, the `-OXf` flags are used to output the full OID list and to group table indexes. 
