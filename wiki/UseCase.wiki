@@ -1,0 +1,40 @@
+#summary One-sentence summary of this page.
+
+= Introduction =
+
+To convert the output of snmpget into an XML format.
+
+
+= Details =
+
+An output of snmpget, snmpwalk or snmpbulkwalk might look like this:
+(assuming the -OXf options)
+
+{{{
+.iso.org.dod.internet.mgmt.mib-2.tcp.tcpConnTable.tcpConnEntry.tcpConnState[10.68.8.251][548][10.68.8.7][51998] = INTEGER: established(5)
+}}}
+
+It could be useful to convert this output into XML for further processing by XPath or XQuery to be used in some Network Manager.
+
+The XML output could look like this:
+
+{{{
+<iso>
+  <org>
+    <dod>
+      <internet>
+        <mgmt>
+          <mib-2>
+            <tcp>
+              <tcpConnTable>
+                <tcpConnEntry>
+                  <tcpConnState>
+                    <value oid="tcpConnState" type="INTEGER" index1="10.68.8.251" index2="548" index3="10.68.8.7" index4="51998" enum="5">established</value>
+                  </tcpConnState>
+...
+}}}
+
+This data might then be represented as a table.
+
+|| Local Address || Local Port || Remote Address || Remote Port || State ||
+|| 10.68.8.251 || 548 || 10.68.8.7 || 51998 || established ||
