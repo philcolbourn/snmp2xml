@@ -23,9 +23,9 @@ snmpwalk -v2c -cpublic -OXf 10.68.8.251 > time-capsule.snmpwalk
 Use `snmp2xml` to convert the SNMP output to XML.
 
 {{{
-awk -f pc-snmp2xml.awk time-capsule-tcp.snmpwalk > time-capsule-tcp.snmpwalk.xml
+awk -f snmp2xml.awk time-capsule-tcp.snmpwalk > time-capsule-tcp.snmpwalk.xml
 
-awk -f pc-snmp2xml.awk time-capsule.snmpwalk > time-capsule.snmpwalk.xml
+awk -f snmp2xml.awk time-capsule.snmpwalk > time-capsule.snmpwalk.xml
 }}}
 
 = Step 3 =
@@ -44,7 +44,7 @@ xpath time-capsule.snmpwalk.xml "/data/iso/org/dod/internet/mgmt/mib-2/tcp" | xm
 Instead of creating lots of intermediate files that you might not want, you can pipe the output of each stage into the next.
 
 {{{
-snmpwalk -v2c -cpublic -OXf 10.68.8.251 | awk -f pc-snmp2xml.awk | xmllint --format -
+snmpwalk -v2c -cpublic -OXf 10.68.8.251 | awk -f snmp2xml.awk | xmllint --format -
 }}}
 
 `xmllint` can do a lot. In this case I use it to take an XML file and format it for readability.
@@ -59,7 +59,7 @@ The `diff` utility can be used to compare the files and `saxon` can be used to c
 
 {{{
 snmpwalk -v2c -cpublic -OXf 10.68.8.251 > host.snmpwalk
-awk -f pc-snmp2xml.awk | xmllint --format - | saxon pc-xml2snmp.xsl > host.snmpwalk.xml.snmpwalk
+awk -f snmp2xml.awk | xmllint --format - | saxon xml2snmp.xsl > host.snmpwalk.xml.snmpwalk
 
 diff host.snmpwalk host.snmpwalk.xml.snmpwalk
 }}}
