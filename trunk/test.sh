@@ -26,13 +26,22 @@
 # allow execution with a single input file or stdin
 IN=$1
 OUT=$1
-if [ "$1" == "" ]; then
+if [ "$IN" == "" ]; then
+	echo "Usage: $0 [file.snmp | -]"
+	echo "where: - takes input from stdin"
+	echo
+	echo "example: $0 switch-output.snmpwalk"
+	echo "example: cat switch-output.snmpwalk | $0 -"
+	exit 1
+fi
+
+if [ "$IN" == "-" ]; then
 	IN="/dev/stdin"
 	OUT="stdin"
 fi
 
 # fix dodgy snmp output
-cat $IN | awk -f fix-snmpwalk.awk | uniq > $OUT.fixed
+cat $IN | awk -f fix-snmp-output.awk | uniq > $OUT.fixed
 
 # convert to xml and re-format for printing
 cat $OUT.fixed | awk -f snmp2xml-2.awk | xmllint --format - > $OUT.xml
