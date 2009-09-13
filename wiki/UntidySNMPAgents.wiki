@@ -1,0 +1,36 @@
+#summary Clean-up after SNMP agents.
+
+= Introduction =
+
+In testing against 4 SNMP agents it has been found that they don't always output nice SNMP data.
+
+The `snmp2xml` awk script also has a limitation: it can not currently handle SNMP output with new-line characters as part of the returned value.
+
+
+= Details =
+
+To work around these issues the SNMP agent output can be put through `fix-snmp-output.awk` to tidy it up.
+
+== Duplicate Lines ==
+
+One SNMP agent tested returned each line twice. To fix this the output can be passed through *NIX uniq.
+
+{{{
+cat file.snmp | uniq
+}}}
+
+== New-line Characters ==
+
+Another SNMP agent output new-line characters as part of the returned value. The output was like this:
+
+{{{
+.iso.org.dod.internet.mgmt.mib-2.host.hrSWRun.hrSWRunTable.hrSWRunEntry.hrSWRunName[4592] = Hex-STRING: 6A 61 76 61 00 00 00 00 00 00 00 00 00 00 00 00 
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+}}}
+
+To fix this `fix-snmp-output.awk` removes the new-line characters which modifies it to this:
+
+{{{
+.iso.org.dod.internet.mgmt.mib-2.host.hrSWRun.hrSWRunTable.hrSWRunEntry.hrSWRunName[4592] = Hex-STRING: 6A 61 76 61 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+}}}
