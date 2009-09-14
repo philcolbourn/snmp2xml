@@ -1,13 +1,13 @@
 #summary Clean-up after SNMP agents.
 
-= Introduction =
+= Dirty Data =
 
 In testing against 4 SNMP agents it has been found that they don't always output nice SNMP data.
 
 The `snmp2xml` awk script also has a limitation: it can not currently handle SNMP output with new-line characters as part of the returned value.
 
 
-= Details =
+= Work-Around =
 
 To work around these issues the SNMP agent output can be put through `fix-snmp-output.awk` to tidy it up.
 
