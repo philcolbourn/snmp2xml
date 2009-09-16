@@ -2,12 +2,17 @@
 
 = Dirty Data =
 
-In testing against 4 SNMP agents it has been found that they don't always output nice SNMP data.
+In testing against 6 SNMP agents it has been found that they don't always output nice SNMP data.
 
-The `snmp2xml` awk script also has a limitation: it can not currently handle SNMP output with new-line characters as part of the returned value.
+The `snmp2xml` awk script can now process SNMP output that has the following attributes:
 
+  * Adjacent duplicate SNMP output
+  * New-line characters in SNMP output
+  * Carriage-return characters in SNMP output
 
-= Work-Around =
+= Old Work-Around =
+
+*NOTE: This is no longer required.*
 
 To work around these issues the SNMP agent output can be put through `fix-snmp-output.awk` to tidy it up.
 
@@ -20,6 +25,8 @@ cat file.snmp | uniq
 }}}
 
 == New-line Characters ==
+
+*NOTE: This is no longer required.*
 
 Another SNMP agent output new-line characters as part of the returned value. The output was like this:
 
@@ -39,8 +46,7 @@ To fix this `fix-snmp-output.awk` removes the new-line characters which modifies
 
 Another agent makes reference to interfaces but is off by 1.
 
-In the SNMP outpur below, `lo0` is `ifDescr[3]` and `ifIndex[3]` is `3` but later in the output the route entry for `127.0.0.1` (and others) refer to `ifIndex` `4` instead.
-
+In the SNMP output below, `lo0` is `ifDescr[3]` and `ifIndex[3]` is `3` but later in the output the route entry for `127.0.0.1` (and others) refer to `ifIndex` `4` instead.
 
 {{{
 .iso.org.dod.internet.mgmt.mib-2.interfaces.ifNumber.0 = INTEGER: 5
@@ -51,7 +57,7 @@ In the SNMP outpur below, `lo0` is `ifDescr[3]` and `ifIndex[3]` is `3` but late
 .iso.org.dod.internet.mgmt.mib-2.interfaces.ifTable.ifEntry.ifIndex[5] = INTEGER: 5
 .iso.org.dod.internet.mgmt.mib-2.interfaces.ifTable.ifEntry.ifDescr[1] = STRING: gec0
 .iso.org.dod.internet.mgmt.mib-2.interfaces.ifTable.ifEntry.ifDescr[2] = STRING: mv0
-.iso.org.dod.internet.mgmt.mib-2.interfaces.ifTable.ifEntry.ifDescr[3] = STRING: lo0
+*.iso.org.dod.internet.mgmt.mib-2.interfaces.ifTable.ifEntry.ifDescr[3] = STRING: lo0*
 .iso.org.dod.internet.mgmt.mib-2.interfaces.ifTable.ifEntry.ifDescr[4] = STRING: wlan0
 .iso.org.dod.internet.mgmt.mib-2.interfaces.ifTable.ifEntry.ifDescr[5] = STRING: bridge0
 ...
@@ -63,9 +69,9 @@ In the SNMP outpur below, `lo0` is `ifDescr[3]` and `ifIndex[3]` is `3` but late
 .iso.org.dod.internet.mgmt.mib-2.ip.ipRouteTable.ipRouteEntry.ipRouteIfIndex[10.68.8.251] = INTEGER: 4
 .iso.org.dod.internet.mgmt.mib-2.ip.ipRouteTable.ipRouteEntry.ipRouteIfIndex[10.68.8.254] = INTEGER: 6
 .iso.org.dod.internet.mgmt.mib-2.ip.ipRouteTable.ipRouteEntry.ipRouteIfIndex[10.68.8.255] = INTEGER: 6
-.iso.org.dod.internet.mgmt.mib-2.ip.ipRouteTable.ipRouteEntry.ipRouteIfIndex[127.0.0.0] = INTEGER: 4
-.iso.org.dod.internet.mgmt.mib-2.ip.ipRouteTable.ipRouteEntry.ipRouteIfIndex[127.0.0.1] = INTEGER: 4
+*.iso.org.dod.internet.mgmt.mib-2.ip.ipRouteTable.ipRouteEntry.ipRouteIfIndex[127.0.0.0] = INTEGER: 4
+.iso.org.dod.internet.mgmt.mib-2.ip.ipRouteTable.ipRouteEntry.ipRouteIfIndex[127.0.0.1] = INTEGER: 4*
 .iso.org.dod.internet.mgmt.mib-2.ip.ipRouteTable.ipRouteEntry.ipRouteIfIndex[169.254.0.0] = INTEGER: 6
 }}}
 
-These errors are not corrected by `fix-snmp-output.awk`.
+These errors are not corrected by `fix-snmp-output.awk` and `snmp2xml` does not fix them either.
