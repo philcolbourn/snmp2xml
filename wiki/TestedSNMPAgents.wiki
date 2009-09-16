@@ -1,0 +1,20 @@
+#summary Tested SNMP agent output
+
+= Tested SNMP Agents =
+
+The following SNMP agents have been tested with `snmp2xml':
+
+  * Apple Time-capsule
+  * Billion ADSL router
+  * Apple OS-X snmpd
+  * Foundry/Brocade CES
+  * Huawei S9306 L3 switch
+  * Nortel 425 switch
+
+|| SNMP Agent || -OXf || OIDs Increase || Unique OIDs ||
+|| Apple Time-Capsule || PASS || YES || PASS ||
+|| Billion ADSL router || PASS || YES || All Duplicated ||
+|| OS-X Leopard || PASS || YES || PASS ||
+|| Brocade CES || ? || ? || PASS ||
+|| Huawei S9306 || PASS || FAIL || PASS ||
+|| Nortel 425 || PASS || PASS || PASS ||
