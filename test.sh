@@ -41,7 +41,8 @@ if [ "$IN" == "-" ]; then
 fi
 
 # fix dodgy snmp output
-cat $IN | awk -f fix-snmp-output.awk | uniq > $OUT.fixed
+#cat $IN | awk -f fix-snmp-output.awk | uniq > $OUT.fixed
+cat $IN > $OUT.fixed
 
 # convert to xml and re-format for printing
 cat $OUT.fixed | awk -f snmp2xml-2.awk | xmllint --format - > $OUT.xml
@@ -50,4 +51,4 @@ cat $OUT.fixed | awk -f snmp2xml-2.awk | xmllint --format - > $OUT.xml
 cat $OUT.xml | saxon - xml2snmp.xsl > $OUT.xml.snmpwalk
 
 # should match the original
-diff -s $OUT.fixed $OUT.xml.snmpwalk
+diff -B -s --strip-trailing-cr $OUT.fixed $OUT.xml.snmpwalk

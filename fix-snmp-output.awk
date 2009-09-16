@@ -34,12 +34,14 @@
 # process expected OID lines that start with .
 /^(\.).*/{
   if ( FNR > 1 ) printf "\n"	# terminate last OID bu not the first line
+  gsub( "\r" , "" , $0 )
   printf "%s", $0		# start this OID but don't write a new-line yet
   next
 }
 
 # process other lines that we assume are actually part of previous OID
 {
+  gsub( "\r" , "" , $0 )
   printf "%s", $0		# continue previous line
 }
 

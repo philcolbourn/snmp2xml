@@ -230,6 +230,14 @@ function pc_write_element( rule , ruleName , type , raw , rawOID , attName , att
 # all lines have an OID part and a value part
 # line = rawOID = rawValue
 function pc_decode_common(){
+	# added to be able to process newline characters in value field
+	#print "$0>" $0
+	#print "$1>" $1
+	$0	= "." $0	# the new RS consumes the '.' so we add it back
+	# NB: ths updates the other field variables too!
+	#print "$0=" $0
+	#print "$1=" $1
+	# FIXME: or redo the code to take this into account
 	rawOID	= pc_left_of(	$0 , " = "	)
 	rawValue= pc_right_of(	$0 , " = "	)
 	type	= ""
@@ -253,24 +261,59 @@ function pc_decode_enum(){
 	enum	= pc_left_of(	rawEnum	, ")"	)
 }
 
+# test awk script to investigate newline processing
+# cat s9306.snmpwalk | awk -F"( = )" 'BEGIN{RS="\\."}/^$/{RS="\\n\\.";next}{print "[." $0 "]"; RS="\\n\\."}' | less
+
 BEGIN{
-	F	= "( = )" # must set FS here and other variables too
+	# FIXME: why was this F?
+	FS	= "( = )"				# must set FS here and other variables too
+	# added to be able to process newline characters in value field
+	RS	= "\\n\\."				# split lines on newline + '.'
+	LAST	= ""
+	# NB: the first line will keep it '.'
 	# these regex variables will get passed twice so double the slashes
 	# these are loose to allow minor MIB errors to get through (if any)
 	# FIXME: we don't handle BITS well enough I think
 	reOID	= "[-a-zA-Z0-9.]+"			# OID name like '.iso.Mib-2.interface'
 	reIndex	= "(\\[)[-a-zA-Z0-9_: .]+(\\])"		# like '[10.1.1.1][String: _hello][etc.]..'
 	reType	= "[a-zA-Z][-a-zA-Z0-9 ]*"		# SNMP type like 'INTEGER' or 'Network Address'
-	reNumber= "-?[0-9]+"				# like -12 or 34
-	reLabel	= "[a-zA-Z][-a-zA-Z0-9]*"		# like 'disabled' FIXME: should be a-z
-	reEnum	= "[(][0-9]+[)]"			# like '(123)'
-	reUnits	= "[a-zA-Z][-a-zA-Z0-9]*"		# like 'milliseconds'
-	reTime	= "[0-9][a-zA-Z0-9:, .]*"		# like '7 days, 12:23:12.09' FIXME: other formats?
+	reNumber= "-?[0-9]+[\\n\\r]*"			# like -12 or 34
+	reLabel	= "[a-zA-Z][-a-zA-Z0-9]*[\\n\\r]*"	# like 'disabled' FIXME: should be a-z
+	reEnum	= "[(][0-9]+[)][\\n\\r]*"		# like '(123)'
+	reTEnum	= "[(][0-9]+[)]"			# like '(5434123)'
+	reUnits	= "[a-zA-Z][-a-zA-Z0-9]*[\\n\\r]*"	# like 'milliseconds'
+	reTime	= "[0-9][a-zA-Z0-9:, \\.]*[\\n\\r]*"	# like '7 days, 12:23:12.09' FIXME: other formats?
 	reString= ".*"					# any set of characters
 }
 
-( $0 == LAST ){ # ignore adjacent duplicate lines - stupid billion
-	#pc_write_source( "LAST" , $0 ) # comment out if you donh't want source elements
+# strip leading '.' from the first line
+/^\./{
+	#print "Strip '.'"
+	if( NR == 1 ) sub( /^\./ , "" , $0 )
+}
+
+# This could be used to get remove the last OID when using -Cc
+# but it would break the test script
+#/(It is past the end of the MIB tree)/{
+#	next
+#}
+
+# this is not required
+#/^$/{
+#	RS	= "\\n\\."
+#	next
+#}
+
+# debug each lline
+{
+	#print "LA:" LAST
+	#print "$0:" $0
+	#print "$1:" $1
+}
+
+( "." $1 == LAST ){ # ignore adjacent duplicate lines - stupid billion
+	#print "Duplicate"
+	#pc_write_source( "LAST" , $1 ) # comment out if you donh't want source elements
 	next
 }
 
@@ -309,7 +352,7 @@ $0 ~ "^" reOID "(" reIndex ")*" " = " reType ": " reLabel reEnum "$"{
 # {rawOID} = {rawValue                       }
 #            {type=Timeticks}: {data         }
 #                              ({enum}) {time}
-$0 ~ "^" reOID "(" reIndex ")*" " = Timeticks: " reEnum " " reTime "$"{
+$0 ~ "^" reOID "(" reIndex ")*" " = Timeticks: " reTEnum " " reTime "$"{
 	pc_decode_type()
 	pc_decode_enum()
 	time	= pc_right_of(	data	, ") "	)
