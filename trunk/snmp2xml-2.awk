@@ -80,9 +80,8 @@
 # substitute XML escape sequinces for certain characters
 function pc_xml_escape( s ){
 	# you need to use \\ to escape the special behavious or & in the replacement string
-	#print "[" s ":" length(s) "]"
-	gsub( "\\&"	, "\\&amps;"	, s ) # replace & first since the XML escapes use &
-	gsub( "\""	, "\\&quot;"	, s ) # remove quotes
+	gsub( "\\&"	, "\\&amps;"	, s )	# replace & first since the XML escapes use &
+	gsub( "\""	, "\\&quot;"	, s )	# remove quotes
 	gsub( "<"	, "\\&lt;"	, s )
 	gsub( ">"	, "\\&gt;"	, s )
 	gsub( "'"	, "\\&apos;"	, s )
@@ -101,7 +100,7 @@ function pc_find_common( a , b ) {
 				return f	# done if a and b are different
 			else
 				f = i		# matched up to this delimiter
-	return f	# position of last matching delimiter
+	return f				# position of last matching delimiter
 }
 
 # split OID string and return the index of the last common delimiter
@@ -116,12 +115,12 @@ function pc_get_common_delimiter( this ){
 function pc_close_previous_oids( this ){
 	k = pc_get_common_delimiter( this )
 	# not used: lastCommon = substr( LAST , 1 , k-1 )	# get the common part
-	lastUnique = substr( lastOIDs_array[1] , k )			# get unique part of OID - the last k characters
-	n = split( lastUnique , oid_array , "." )			# split OID which is in unique
+	lastUnique = substr( lastOIDs_array[1] , k )		# get unique part of OID - the last k characters
+	n = split( lastUnique , oid_array , "." )		# split OID which is in unique
 	# close previous normal OID elements
 	for ( i=n ; i>=2 ; i-- )				# don't process the first '.'
 		# normally the last oid is a number. eg. a.b.c.0
-		if ( match( oid_array[i] , "[0-9].*" ) != 1 )		# ignore these numeric oids
+		if ( match( oid_array[i] , "[0-9].*" ) != 1 )	# ignore these numeric oids
 			printf "</%s>\n", oid_array[i]
 }
 
@@ -130,7 +129,7 @@ function pc_open_new_oids( this ){
 	k = pc_get_common_delimiter( this )
 	# get just the unique OIDs - ignore the OIDs that are in common with the last line
 	unique = substr( thisOIDs_array[1] , k )
-	n = split( unique , oid_array , "." )				# make an array of OIDs eg. ( "" , e , f )
+	n = split( unique , oid_array , "." )			# make an array of OIDs eg. ( "" , e , f )
 	# make normal OID elements
 	for ( i=2 ; i<=n ; i++ )				# don't process the leading '.'
 		if ( match( oid_array[i] , "[0-9].*" ) != 1 ){	# only process non-numeric OIDs
@@ -145,9 +144,9 @@ function pc_write_index_attributes( oid ){
 	c = split( oid , part_array , "[" )
 
 	# write each index attribute
-	for ( i=2 ; i<=c ; i++ ){	# ignore the OIDs part
+	for ( i=2 ; i<=c ; i++ ){				# ignore the OIDs part
 		col = part_array[i]
-		gsub( "]" , "" , col )	# remove ]
+		gsub( "]" , "" , col )				# remove ]
 		printf " index%s=\"%s\"", (i-1), pc_xml_escape( col )
 	}
 }
@@ -155,14 +154,14 @@ function pc_write_index_attributes( oid ){
 # if there are numerical indexes, write them as a single attribute
 function pc_write_oid_attribute( oid ){
 	# start with .a.b.c.d[1.2][3].0 -> .a.b.c.d.0
-	gsub( /\[.*\]/ , "" , oid)	# remove indexes - everything in [ ]
+	gsub( /\[.*\]/ , "" , oid)				# remove indexes - everything in [ ]
 	# split .a.b.c.d.0 -> a b c d 0	
-	c = split( oid , part_array , "[.]" )	# OIDs are separated by .
+	c = split( oid , part_array , "[.]" )			# OIDs are separated by .
 
 	# build a single value
 	oidIndex = ""
 	for ( i=1 ; i<=c ; i++ ){
-		if ( match( part_array[i] , "[0-9].*" ) == 1 ){ # only process numeric OIDs
+		if ( match( part_array[i] , "[0-9].*" ) == 1 ){	# only process numeric OIDs
 			oidIndex = oidIndex "." part_array[i]
 		}
 	}	
@@ -202,14 +201,11 @@ function pc_write_value( value ){
 function pc_setup_element( type , ruleName ){
 	pc_close_previous_oids( $1 )
 	pc_open_new_oids( $1 )
-	LAST = $1			# save this OID to work out how many elements to close
+	LAST = $1				# save this OID to work out how many elements to close
 	pc_write_source( type , ruleName )	# comment out if you donh't want source elements
 }
 
-# for pc_left_of and pc_right_of, the delimiter is a regex so use match instead of index.
-# substr can not handle \xff so use sub instead
 function pc_left_of( s , d ){
-	#p = match( s , d )		# get position of first delimiter
 	p = index( s , d )		# get position of first delimiter
 	if (p == 0 ) return s
 	l = substr( s , 1 , p-1 )	# get left of the delimiter
@@ -223,26 +219,19 @@ function pc_left_of( s , d ){
 # echo "" | awk '{ s="hello\xff" ; sub("hello","",s) ; print s }' | hexdump
 
 function pc_right_of( s , d ){
-	#p = match( s , d )		# get position of first delimiter
 	p = index( s , d )		# get position of first delimiter
 	if (p == 0 ) return ""
 	split( "" , c_array , "" )	# blank array
-#	print "r[1" s "]" p
-	n = split( s , c_array , "" )
-	r=""
+	n = split( s , c_array , "" )	# split into n characters
+	r = ""
 	for( i=p+length(d) ; i<=n ; i++){
-		r=r c_array[i]
-#		printf "[%d,%c]", i, c_array[i]
+		r = r c_array[i]	# join the RHS back together
 	}
-	#l = substr( s , 1 , p+length(d)-1 )	# get delimiter and all to the left
-	#sub( l , "" , s )		# cant use substr as it ignores \xff characters
-#	print "r[2" r "]"
 	return r
 }
 
 # close/open elements, write the value, add attributes, and write value
 function pc_write_element( rule , ruleName , type , raw , rawOID , attName , attValue , value ){
-	#print "[" $0 ":" value "]"
 	pc_setup_element( rule , ruleName )
 	pc_write_value_open( type , raw )
 	pc_write_oid_attributes( rawOID )
@@ -254,37 +243,21 @@ function pc_write_element( rule , ruleName , type , raw , rawOID , attName , att
 # line = rawOID = rawValue
 function pc_decode_common(){
 	# added to be able to process newline characters in value field
-	#print "$0>" $0
-	#print "$1>" $1
 	$0	= "." $0	# the new RS consumes the '.' so we add it back
 	# NB: ths updates the other field variables too!
-	#print "$0=" $0
-	#print "$1=" $1
 	# FIXME: or redo the code to take this into account
 	rawOID	= pc_left_of(	$0 , " = "	)
 	rawValue= pc_right_of(	$0 , " = "	)
-	#print "rawOID	=" rawOID
-	#print "rawValue	=" rawValue
 	type	= ""
 	data	= rawValue
-	#print "type	=" type
-	#print "data	=" data
 }
 
 # most lines have a type and some sort of data
 # value = type: data
 function pc_decode_type(){
 	pc_decode_common()
-	#print "rawOID	=" rawOID
-	#print "rawValue	=" rawValue
-	#print "type	=" type
-	#print "data	=" data
 	type	= pc_left_of(	rawValue , ": "	)
 	data	= pc_right_of(	rawValue , ": "	)
-	#print "rawOID	=" rawOID
-	#print "rawValue	=" rawValue
-	#print "type	=" type
-	#print "data	=" data
 }
 
 # some types have numbers in braces
@@ -294,8 +267,6 @@ function pc_decode_type(){
 function pc_decode_enum(){
 	rawEnum	= pc_right_of(	data	, "("	)
 	enum	= pc_left_of(	rawEnum	, ")"	)
-	#print "rawEnum	=" rawEnum
-	#print "enum	=" enum
 }
 
 # test awk script to investigate newline processing
@@ -406,7 +377,6 @@ $0 ~ "^" reOID "(" reIndex ")*" " = Timeticks: " reTEnum " " reTime "$"{
 $0 ~ "^" reOID "(" reIndex ")*" " = " reType ": " reString "$"{
 	pc_decode_type()
 	string	= data
-	#print "[" data "]"
 	pc_write_element( "S" , "strings" , type , data , rawOID , "" , "" , string )
 	next
 }
