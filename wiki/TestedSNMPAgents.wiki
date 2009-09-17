@@ -4,17 +4,20 @@
 
 The following SNMP agents have been tested with `snmp2xml':
 
-  * Apple Time-capsule
-  * Billion ADSL router
-  * Apple OS-X snmpd
-  * Foundry/Brocade CES
-  * Huawei S9306 L3 switch
-  * Nortel 425 switch
+|| Device || Version Details ||
+|| Apple Time-capsule ||  ||
+|| Billion ADSL router || ||
+||Apple OS-X snmpd || 10.5.8 ||
+||Foundry/Brocade CES ||  ||
+|| Huawei S9306 L3 switch || Quidway S9306 Huawei VRP V5.50 ||
+|| Nortel 425-24T switch || HW:06 FW:3.5.0.2 SW:v3.5.0.06 BN:6 ||
 
-|| SNMP Agent || -OXf || OIDs Increase || Unique OIDs ||
-|| Apple Time-Capsule || PASS || YES || PASS ||
-|| Billion ADSL router || PASS || YES || All Duplicated ||
-|| OS-X Leopard || PASS || YES || PASS ||
+= Results =
+
+|| SNMP Agent || -OXf || OIDs Increase || Unique OIDs || snmp2xml Issues ||
+|| Apple Time-Capsule || PASS || YES || PASS || ipRouteIfIndex off by 1 ||
+|| Billion ADSL router || PASS || YES || All Duplicated || removes duplicates, xml2snmp does not re-generate duplicates ||
+|| OS-X Leopard 10.5.8 || PASS || YES || PASS || ||
 || Brocade CES || ? || ? || PASS ||
-|| Huawei S9306 || PASS || FAIL || PASS ||
-|| Nortel 425 || PASS || PASS || PASS ||
+|| Huawei S9306 || PASS || FAIL (-Cc required) || PASS || new-lines and carriage-returns handled ok ||
+|| Nortel 425-24T || PASS || PASS || PASS || ||
