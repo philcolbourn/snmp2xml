@@ -16,8 +16,8 @@ The following SNMP agents have been tested with `snmp2xml':
 
 || *SNMP Agent* || *-OXf* || *OIDs Increase* || *Unique OIDs* || *snmp2xml Issues* ||
 || Apple Time-Capsule || PASS || YES || PASS || ipRouteIfIndex off by 1 ||
-|| Billion ADSL router || PASS || YES || All Duplicated || removes duplicates, xml2snmp does not re-generate duplicates ||
+|| Billion ADSL router || PASS || YES || All Duplicated || Removes duplicates, xml2snmp does not re-generate duplicates ||
 || OS-X Leopard 10.5.8 || PASS || YES || PASS || Outputs strings of hex FF ||
-|| Brocade CES || ? || ? || PASS ||
-|| Huawei S9306 || PASS || FAIL (-Cc required) || PASS || new-lines and carriage-returns handled ok ||
+|| Brocade CES || PASS || ? || PASS ||
+|| Huawei S9306 || PASS || FAIL (-Cc required) || PASS || New-lines and carriage-returns handled ok ||
 || Nortel 425-24T || PASS || PASS || PASS || ||
