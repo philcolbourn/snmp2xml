@@ -9,6 +9,7 @@ The `snmp2xml` awk script can now process SNMP output that has the following att
   * Adjacent duplicate SNMP output
   * New-line characters in SNMP output
   * Carriage-return characters in SNMP output
+  * Graphic characters above 0x7F such as 0xFF
 
 = Old Work-Around =
 
@@ -75,3 +76,9 @@ In the SNMP output below, `lo0` is `ifDescr[3]` and `ifIndex[3]` is `3` but late
 }}}
 
 These errors are not corrected by `fix-snmp-output.awk` and `snmp2xml` does not fix them either.
+
+= Graphic Characters =
+
+`awk` and `gawk` don't like these characters in strings so the solution is messy.
+
+`mawk` may process them more easily, but in the interest of compatibility only `awk` will be used.
