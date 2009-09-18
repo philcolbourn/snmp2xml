@@ -42,7 +42,9 @@ fi
 
 # fix dodgy snmp output
 #cat $IN | awk -f fix-snmp-output.awk | uniq > $OUT.fixed
-cat $IN > $OUT.fixed
+# erase last line if it has no type - the -Cc message
+# ' = No more variables left in this MIB View (It is past the end of the MIB tree)'
+cat $IN | grep -v " = [a-zA-Z0-9( )]*$"> $OUT.fixed
 
 # convert to xml and re-format for printing
 cat $OUT.fixed | awk -f snmp2xml-2.awk | xmllint --format - > $OUT.xml
