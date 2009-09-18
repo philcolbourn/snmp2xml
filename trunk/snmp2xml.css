@@ -1,0 +1,65 @@
+<![CDATA[
+h1 {
+	text-align: center;
+	color: blue;
+}
+h2	{text-align: center;}
+p	{text-align: center;}
+
+.up		{color: #009000;}
+.down		{color: #900000;}
+.testing	{color: #909000;}
+.unknown	{color: #009090;}
+.dormant	{color: #909000;}
+.notPresant	{color: #909090;}
+.lowerLayerDown	{color: #900090;}
+
+table {
+	text-align: center;
+	margin-left: auto;
+	margin-right: auto;
+	font-family: "Courier New",Courier,monospace;
+	border-width: 1px 1px 1px 1px;
+	border-spacing: 2px;
+	border-style: none;
+	border-color: gray;
+	border-collapse: collapse;
+	background-color: red;
+}
+table tr.odd:hover,tr.even:hover {
+	background-color: #a0a0ff;
+}
+table th {
+	border-width: 1px 1px 1px 1px;
+	padding: 2px 2px 2px 2px;
+	border-style: none none none none;
+	border-color: gray;
+	background-color: #c0c0ff;
+	color: black;
+}
+table tr.odd {
+	border-width: 1px 1px 1px 1px;
+	padding: 2px 2px 2px 2px;
+	border-style: solid none solid none;
+	border-color: gray;
+	background-color: white;
+	color: black;
+	background-color: #f0f0ff;
+}
+table tr.even {
+	border-width: 1px 1px 1px 1px;
+	padding: 2px 2px 2px 2px;
+	border-style: solid none solid none;
+	border-color: gray;
+	background-color: white;
+	color: black;
+	background-color: #e0e0ff;
+}
+table td {
+	border-width: 1px 1px 1px 1px;
+	padding: 2px 2px 2px 2px;
+	border-style: none;
+	border-color: gray;
+	Xbackground-color: white;
+}
+]]>
