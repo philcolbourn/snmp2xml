@@ -19,6 +19,7 @@ declare variable $doc	:= doc('/dev/stdin');
 				<th>Type	</th>
 				<th>Next Hop	</th>
 				<th>If	</th>
+				<th>Offset	</th>
 				<th>Interface	</th>
 				<th>MAC	</th>
 				<th>MTU<br/>Bytes	</th>
@@ -33,11 +34,16 @@ declare variable $doc	:= doc('/dev/stdin');
 			{
 			let $rt		:= $doc//ip/ipRouteTable/ipRouteEntry
 			let $it		:= $doc//interfaces/ifTable/ifEntry 
+			(: some SNMP agents provide wrong ipRouteIfIndex values :)
+			(: determine ip interface offset :)
+			let $ipIndex		:= $rt/ipRouteIfIndex/value[ @index1 = '127.0.0.1' ]
+			let $loIndex		:= $it/ifType/value[ @enum = '24' ]/@index1
+			let $offset		:= number($ipIndex) - number($loIndex)
 
 			for $rIndex at $row in $rt/ipRouteDest/value/text()
 			let $r			:= $rt//value[	@index1 = $rIndex	]
 			let $ifIndex		:= $r[ @oid = 'ipRouteIfIndex' ]/text()
-			let $if			:= $it//value[	@index1 = $ifIndex	] 
+			let $if			:= $it//value[	@index1 = string( number($ifIndex) - $offset )	] 
 			let $ifAdminStatus	:= $if[	@oid = 'ifAdminStatus'	]/text()
 			let $ifOperStatus	:= $if[	@oid = 'ifOperStatus'	]/text()
 			return
@@ -47,6 +53,7 @@ declare variable $doc	:= doc('/dev/stdin');
 				<td>{$r[	@oid = 'ipRouteType'	]/text()}</td>
 				<td>{$r[	@oid = 'ipRouteNextHop'	]/text()}</td>
 				<td>{$ifIndex}</td>
+				<td style="color:{if($offset = 0) then 'palegreen' else 'pink'};">{$offset}</td>
 				<td>{$if[	@oid = 'ifDescr'	]/text()}</td>
 				<td>{$if[	@oid = 'ifPhysAddress'	]/text()}</td>
 				<td>{$if[	@oid = 'ifMtu'		]/text()}</td>
@@ -65,6 +72,7 @@ declare variable $doc	:= doc('/dev/stdin');
 		<table border="1">
 			<tr>
 				<th>Index	</th>
+				<th>Interface<br/>Offset	</th>
 				<th>Descr	</th>
 				<th>Type	</th>
 				<th>MAC		</th>
@@ -79,14 +87,20 @@ declare variable $doc	:= doc('/dev/stdin');
 			{
 			let $rt	:= $doc//ip/ipRouteTable/ipRouteEntry
 			let $it	:= $doc//interfaces/ifTable/ifEntry 
+			(: determine ip interface offset :)
+			let $ipIndex		:= $rt/ipRouteIfIndex/value[ @index1 = '127.0.0.1' ]
+			let $loIndex		:= $it/ifType/value[ @enum = '24' ]/@index1
+			let $offset		:= number($ipIndex) - number($loIndex)
+
 			for $ifIndex at $row in $it/ifIndex/value/text()
 			let $if		:= $it//value[	@index1 = $ifIndex	] 
-			let $r		:= $rt/ipRouteIfIndex/value[ text() = $ifIndex ]/@index1
+			let $r		:= $rt/ipRouteIfIndex/value[ text() = string( number($ifIndex) + $offset ) ]/@index1
 			let $ifAdminStatus	:= $if[	@oid = 'ifAdminStatus'	]/text()
 			let $ifOperStatus	:= $if[	@oid = 'ifOperStatus'	]/text()
 			return
 			<tr class="{if(($row mod 2) = 0) then "even" else "odd"}">
 				<td>{$ifIndex}</td>
+				<td style="color:{if($offset = 0) then 'palegreen' else 'pink'};">{$offset}</td>
 				<td>{$if[	@oid = 'ifDescr'		]/text()}</td>
 				<td>{$if[	@oid = 'ifType'			]/text()}</td>
 				<td>{$if[	@oid = 'ifPhysAddress'		]/text()}</td>
@@ -94,8 +108,8 @@ declare variable $doc	:= doc('/dev/stdin');
 				<td>{$if[	@oid = 'ifSpeed' 		]/text() idiv 1000000}</td>
 				<td>{$if[	@oid = 'ifInOctets'		]/text() idiv 1000000}</td>
 				<td>{$if[	@oid = 'ifOutOctets'		]/text() idiv 1000000}</td>
-				<td style="background-color: {if($ifAdminStatus = 'up') then 'PaleGreen' else 'Pink'};">{$ifAdminStatus}</td>
-				<td style="background-color: {if($ifOperStatus = 'up') then 'PaleGreen' else 'Pink'};">{$ifOperStatus}</td>
+				<td style="background-color:{if($ifAdminStatus = 'up') then 'palegreen' else 'pink'};">{$ifAdminStatus}</td>
+				<td style="background-color:{if($ifOperStatus = 'up') then 'palereen' else 'pink'};">{$ifOperStatus}</td>
 				<td>
 				{
 				for $d in $r
@@ -144,10 +158,10 @@ declare variable $doc	:= doc('/dev/stdin');
 				<td>{$if[	@oid = 'ifOutUcastPkts'		]/text() idiv 1000000}</td>
 				<td>{$if[	@oid = 'ifInNUcastPkts'		]/text() idiv 1000000}</td>
 				<td>{$if[	@oid = 'ifOutNUcastPkts'	]/text() idiv 1000000}</td>
-				<td style="background-color: Pink">{$if[	@oid = 'ifInDiscards'	]/text()}</td>
-				<td style="background-color: Pink">{$if[	@oid = 'ifOutDiscards'	]/text()}</td>
-				<td style="background-color: Pink">{$if[	@oid = 'ifInErrors'	]/text()}</td>
-				<td style="background-color: Pink">{$if[	@oid = 'ifOutErrors'	]/text()}</td>
+				<td style="background-color:pink">{$if[	@oid = 'ifInDiscards'	]/text()}</td>
+				<td style="background-color:pink">{$if[	@oid = 'ifOutDiscards'	]/text()}</td>
+				<td style="background-color:pink">{$if[	@oid = 'ifInErrors'	]/text()}</td>
+				<td style="background-color:pink">{$if[	@oid = 'ifOutErrors'	]/text()}</td>
 				<td>{$if[	@oid = 'ifInUnknownProtos'	]/text()}</td>
 				<td>{$if[	@oid = 'ifOutQLen'		]/text()}</td>
 			</tr>
