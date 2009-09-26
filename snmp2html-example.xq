@@ -33,28 +33,12 @@ declare function local:pc-make-table-headings( $headings ){
 	</tr>
 };
 
-(: output a table data element from a base xpath :)
-(: eg. 
-	<value oid="test">test</value>
-	<value oid="this">this</value>
-:)
-
-declare function local:td( $att , $value ){
-	<td fn="local:td(a,v)">{ local:make-attributes( $att ) }{ $value }</td>
-};
-declare function local:td-att( $base , $att ){
-	<td fn="local:td-att(b,{$att})">{ string( $base/@*[ local-name() = $att ] ) }</td>
-};
-declare function local:td-value( $base ){
-	<td fn="local:td-value(b)">{ $base/value/text() }</td>
-};
-declare function local:td-child-value( $base , $child ){
-	<td fn="local:td-child-value(b,{$child})">{ $base/*[ local-name() = $child ]/value/text() }</td>
-};
+(: NOTE: can not easily put all parameters into the fn attrubute :)
 
 (: add attributes to current element :)
 (: '"' can not appear in attribute values so they can be used as delimiters :)
 (: WARNING: this assumes that attribute statements are space separated :)
+
 declare function local:make-attributes( $att ){
 	for $a in tokenize( $att , '["]\s+' )						(: for each attribute - split on quote space :)
 		let $rawname	:= substring-before( $a , '=' )				(: get raw name before the '=' :)
@@ -64,67 +48,110 @@ declare function local:make-attributes( $att ){
 	return attribute {$name} {$value}
 };
 
+(: make a td element from an actual value :)
+(: eg 10 returns <td>10</td> :)
 
-declare function local:td-oid( $base , $oid ){
-	let $d := $base[ @oid = $oid ]/text()
-	return
-		<td fn="td-oid(b,{$oid})">{ $d }</td>
+declare function local:td( $att , $value ){
+	<td fn="local:td(a,v)">
+		{ local:make-attributes( $att ) }
+		{ $value }
+	</td>
 };
-declare function local:td-att-oid( $att , $base , $oid ){
+
+(: make a td element from an attribute of an element :)
+(: eg <element a="10">20</element> returns <td>10</td> :)
+
+declare function local:td-att( $att , $element , $attName ){
+	<td fn="local:td-att(a,e,{$attName})">
+		{ local:make-attributes( $att ) }
+		{ string( $element/@*[ local-name() = $attName ] ) }
+	</td>
+};
+
+(: make a td element from the text of a value element :)
+(: eg <base><value a="10">20</value></base> returns <td>20</td> :)
+
+declare function local:td-value( $att , $base ){
+	<td fn="local:td-value(b)">
+		{ local:make-attributes( $att ) }
+		{ $base/value/text() }
+	</td>
+};
+
+(: make a td element from the text of a value element of a child element :)
+(: eg <base><child><value a="10">20</value></child></base> returns <td>20</td> :)
+
+declare function local:td-child-value( $att , $base , $child ){
+	<td fn="local:td-child-value(a,b,{$child})">
+		{ local:make-attributes( $att ) }
+		{ $base/*[ local-name() = $child ]/value/text() }
+	</td>
+};
+
+(: make a td element from an oid attribute of a value element :)
+(: eg <value oid="ifIndex">20</value> returns <td>10</td> :)
+
+declare function local:td-oid( $att , $base , $oid ){
 	let $d := $base[ @oid = $oid ]/text()
 	return
 		<td fn="td-att-oid(a,b,{$oid})">
-		{ local:make-attributes($att) }
-		{
-		for $a in tokenize( replace(normalize-space($att),'= "','="') , ' ' )				(: for each attribute - split on space :)
-			let $name := substring-before( $a , '="' )				(: get name before the '="' :)
-			let $value := substring-before( substring-after( $a , '="' ) , '"' )	(: get value between the quotes :)
-			return element {$name} {$value}
-		}
-		{ $d }</td>
+			{ local:make-attributes( $att ) }
+			{ $d }
+		</td>
 };
-declare function local:td-oid-scale( $base , $oid , $scale ){
+
+declare function local:td-oid-scale( $att , $base , $oid , $scale ){
 	let $d := $base[ @oid = $oid ]/text() idiv $scale
 	return
-		<td fn="td-oid-scale(b,{$oid},{$scale})">{ $d }</td>
+		<td fn="td-oid-scale(a,b,{$oid},{$scale})">
+			{ local:make-attributes( $att ) }
+			{ $d }
+		</td>
 };
-declare function local:td-oidCSV( $base , $oidCSV ){
+
+(: CSV versions of the td functions :)
+(: these take a comma separated list of names or values and return multiple td elements :)
+
+declare function local:td-oidCSV( $att , $base , $oidCSV ){
 	for $oid in tokenize( $oidCSV , ',' )
 	return
-		local:td-oid( $base , $oid )
+		local:td-oid( $att , $base , $oid )
 };
-declare function local:td-att-oidCSV( $att , $base , $oidCSV ){
-	for $oid in tokenize( $oidCSV , ',' )
+
+declare function local:td-attCSV( $att , $base , $attNameCSV ){
+	for $attName in tokenize( $attNameCSV , ',' )
 	return
-		local:td-att-oid( $att , $base , $oid )
+		local:td-att( $att , $base , $attName )
 };
-declare function local:td-attCSV( $base , $attCSV ){
-	for $att in tokenize( $attCSV , ',' )
-	return
-		local:td-att( $base , $att )
-};
-declare function local:td-child-valueCSV( $base , $childCSV ){
+
+declare function local:td-childCSV-value( $att , $base , $childCSV ){
 	for $child in tokenize( $childCSV , ',' )
 	return
-		local:td-child-value( $base , $child )
+		local:td-child-value( $att , $base , $child )
 };
-declare function local:td-oidCSV-scale( $base , $oidCSV , $scale ){
+
+declare function local:td-oidCSV-scale( $att , $base , $oidCSV , $scale ){
 	for $oid in tokenize( $oidCSV , ',' )
 	return
-		local:td-oid-scale( $base , $oid , $scale )
+		local:td-oid-scale( $att , $base , $oid , $scale )
 };
+
+(: some SNMP agents provide wrong ipRouteIfIndex values	:)
+(: return the ip MIB ifIndex offset to the interfaces MIB ifIndex :)
 declare function local:get-offset(){
 	let $rt		:= $doc//ip/ipRouteTable/ipRouteEntry						(: all of the routing table entries :)
 	let $it		:= $doc//interfaces/ifTable/ifEntry						(: all of the interface entries :)
-	(: some SNMP agents provide wrong ipRouteIfIndex values :)
-	(: determine ip interface offset :)
 
-	(: determine ip interface offset :)
 	let $ipIndex	:= $rt/ipRouteIfIndex/value	[ @index1	= '127.0.0.1'	]		(: get the interface used for loopback route :)
 	let $loIndex	:= $it/ifType/value		[ @enum		= '24'		]/@index1	(: get the loopback interfce :)
 	let $offset	:= number($ipIndex) - number($loIndex)						(: the difference is the offset :)
 	return $offset
 };
+
+declare function local:class( $name ){
+	concat( 'class="' , $name , '"' )
+};
+
 
 <html>
 	<head>
@@ -136,33 +163,31 @@ declare function local:get-offset(){
 		<h1>{ $doc//sysDescr/value/text() }</h1>
 		<h2>Routing Table</h2>
 		<table border="1">
-			{
-			local:pc-make-table-headings( ( 'Route','Mask','Type','Next-Hop','If','If-Offset','Interface','MAC-Address','MTU-Bytes','Speed-Mbps','Octets-In|Out-MBytes|MBytes','State-Admin|Oper' ) )
-			}
+			{ local:pc-make-table-headings( ( 'Route','Mask','Type','Next-Hop','If','If-Offset','Interface','MAC-Address','MTU-Bytes','Speed-Mbps','Octets-In|Out-MBytes|MBytes','State-Admin|Oper' ) ) }
 			{
 			let $rt			:= $doc//ip/ipRouteTable/ipRouteEntry						(: all of the routing table entries :)
 			let $it			:= $doc//interfaces/ifTable/ifEntry						(: all of the interface entries :)
 			let $offset		:= local:get-offset()
 
 			for $rIndex at $row in $rt/ipRouteDest/value/text()							(: for each route destination :)
-
-			let $r			:= $rt//value	[ @index1	= $rIndex		]			(: get all the details for this route :)
-			let $ifIndex		:= $r		[ @oid		= 'ipRouteIfIndex'	]/text()		(: get the route interface :)
-			let $iIndex		:= string( number($ifIndex) - $offset )						(: adjust it if required :)
-			let $if			:= $it//value	[ @index1	= $iIndex		]			(: get all the interface details for this route :)
-			let $ifAdminStatus	:= $if		[ @oid		= 'ifAdminStatus'	]/text()
-			let $ifOperStatus	:= $if		[ @oid		= 'ifOperStatus'	]/text()
+				let $r			:= $rt//value	[ @index1	= $rIndex		]		(: get all the details for this route :)
+				let $ifIndex		:= $r		[ @oid		= 'ipRouteIfIndex'	]/text()	(: get the route interface :)
+				let $iIndex		:= string( number($ifIndex) - $offset )					(: adjust it if required :)
+				let $if			:= $it//value	[ @index1	= $iIndex		]		(: get all the interface details for this route :)
+				let $ifAdminStatus	:= $if		[ @oid		= 'ifAdminStatus'	]/text()
+				let $ifOperStatus	:= $if		[ @oid		= 'ifOperStatus'	]/text()
+				let $offsetColor	:= concat( 'style="color:' , if($offset=0) then '#009000' else '#900000' , '"' )
 			return
 			<tr class="{ if(($row mod 2) = 0) then 'even' else 'odd' }">
 				{(
-				local:td( '' , $rIndex )
-				,local:td-oidCSV( $r , 'ipRouteMask,ipRouteType,ipRouteNextHop' )
-				,local:td( '' , $ifIndex )
-				,local:td( concat( 'style="color:' , 	if($offset = 0) then '#009000' else '#900000' , '"' ) , $offset )
-				,local:td-oidCSV( 			$if , 'ifDescr,ifPhysAddress,ifMtu'			)
-				,local:td-oidCSV-scale(	$if , 'ifSpeed,ifInOctets,ifOutOctets' , 1000000	)
-				,local:td( concat( 'class="' , $ifAdminStatus	, '"' ) , $ifAdminStatus	)
-				,local:td( concat( 'class="' , $ifOperStatus	, '"' ) , $ifOperStatus		)
+				local:td( 		''				, $rIndex )
+				,local:td-oidCSV(	''				, $r 		, 'ipRouteMask,ipRouteType,ipRouteNextHop' )
+				,local:td(		''				, $ifIndex )
+				,local:td(		$offsetColor			, $offset )
+				,local:td-oidCSV( 	''				, $if 		, 'ifDescr,ifPhysAddress,ifMtu' )
+				,local:td-oidCSV-scale(	''				, $if 		, 'ifSpeed,ifInOctets,ifOutOctets' , 1000000 )
+				,local:td(		local:class( $ifAdminStatus )	, $ifAdminStatus )
+				,local:td(		local:class( $ifOperStatus )	, $ifOperStatus )
 				)}
 			</tr>
 			}
@@ -173,32 +198,30 @@ declare function local:get-offset(){
 		<h2>Interfaces</h2>
 		<table border="1">
 			<!-- WARNING: without tr, &#10; works as a newline character in th headings. with tr it becomes a space in th headings! -->
-			{
-			local:pc-make-table-headings( ( 'Index','Interface-Offset','Descr','Type','MAC-Address','MTU-Bytes','Speed-Mbps','Octets-In|Out-MBytes|MBytes','State-Admin|Oper','Routes' ) )
-			}
+			{ local:pc-make-table-headings( ( 'Index','Interface-Offset','Descr','Type','MAC-Address','MTU-Bytes','Speed-Mbps','Octets-In|Out-MBytes|MBytes','State-Admin|Oper','Routes' ) ) }
 			{
 			let $rt			:= $doc//ip/ipRouteTable/ipRouteEntry
 			let $it			:= $doc//interfaces/ifTable/ifEntry 
 			let $offset		:= local:get-offset()
 
-			for $ifIndex at $row in $it/ifIndex/value/text()				(: for each interface :)
-
-			let $rIndex		:= string( number($ifIndex) + $offset )
-			let $if			:= $it//value			[ @index1	= $ifIndex		]	(: get all values for this interface :) 
-			let $r			:= $rt/ipRouteIfIndex/value	[ text()	= $rIndex		]/@index1	(: ? :)
-			let $ifAdminStatus	:= $if				[ @oid		= 'ifAdminStatus'	]/text()
-			let $ifOperStatus	:= $if				[ @oid		= 'ifOperStatus'	]/text()
-
+			for $ifIndex at $row in $it/ifIndex/value/text()									(: for each interface :)
+				let $rIndex		:= string( number($ifIndex) + $offset )
+				let $if			:= $it//value			[ @index1	= $ifIndex		]		(: get all values for this interface :) 
+				let $r			:= $rt/ipRouteIfIndex/value	[ text()	= $rIndex		]/@index1	(: ? :)
+				let $ifAdminStatus	:= $if				[ @oid		= 'ifAdminStatus'	]/text()
+				let $ifOperStatus	:= $if				[ @oid		= 'ifOperStatus'	]/text()
+				let $offsetColor	:= concat( 'style="color:' , if($offset=0) then '#009000' else '#900000' , '"' )
+				let $routes		:= for $d in $r return ( string($d) , <br/> )
 			return
 			<tr class="{ if(($row mod 2) = 0) then 'even' else 'odd' }">
 				{(
-				local:td( '' , $ifIndex )
-				,local:td( concat( 'style="color:' , 	if($offset = 0) then '#009000' else '#900000' , '"' ) , $offset )
-				,local:td-oidCSV( $if , 'ifDescr,ifType,ifPhysAddress,ifMtu' )
-				,local:td-oidCSV-scale( $if , 'ifSpeed,ifInOctets,ifOutOctets' , 1000000 )
-				,local:td( concat( 'class="' , $ifAdminStatus , '"' ) , $ifAdminStatus )
-				,local:td( concat( 'class="' , $ifOperStatus , '"' ) , $ifOperStatus )
-				,local:td( '' , for $d in $r return ( string($d) , <br/> ) )
+				local:td(		''				, $ifIndex )
+				,local:td(		$offsetColor			, $offset )
+				,local:td-oidCSV(	''				, $if			, 'ifDescr,ifType,ifPhysAddress,ifMtu' )
+				,local:td-oidCSV-scale(	''				, $if			, 'ifSpeed,ifInOctets,ifOutOctets'	, 1000000 )
+				,local:td(		local:class( $ifAdminStatus )	, $ifAdminStatus )
+				,local:td(		local:class( $ifOperStatus )	, $ifOperStatus )
+				,local:td(		''				, $routes )
 				)}	
 			</tr>
 			} 
@@ -208,24 +231,20 @@ declare function local:get-offset(){
 
 		<h2>Interfaces Stats</h2>
 		<table border="1">
+			{ local:pc-make-table-headings( ( 'Index','Descr','Type','Speed-Mbps','Octets-In|Out-MBytes|MBytes','Unicasts-In|Out','Non-Unicasts-In|Out','Discards-In|Out','Errors-In|Out','Protocol-Unknown-In','Queue-Length-Out' ) ) }
 			{
-			local:pc-make-table-headings( ( 'Index','Descr','Type','Speed-Mbps','Octets-In|Out-MBytes|MBytes','Unicasts-In|Out','Non-Unicasts-In|Out','Discards-In|Out','Errors-In|Out','Protocol-Unknown-In','Queue-Length-Out' ) )
-			}
-			{
-			let $it	:= $doc//interfaces/ifTable/ifEntry					(:  :)
-
+			let $it		:= $doc//interfaces/ifTable/ifEntry				(:  :)
+			let $red	:= 'style="color:#900000"'
 			for $ifIndex at $row in $it/ifIndex/value/text()				(: for each interface :)
-
-			let $if	:= $it//value	[ @index1 = $ifIndex ]					(: get all the entries for this interface :)
-
+				let $if	:= $it//value	[ @index1 = $ifIndex ]				(: get all the entries for this interface :)
 			return
 			<tr class="{ if(($row mod 2) = 0) then 'even' else 'odd' }">
 				{(
-				local:td( '' , $ifIndex )
-				,local:td-oidCSV( $if , 'ifDescr,ifType' )
-				,local:td-oidCSV-scale( $if , 'ifSpeed,ifInOctets,ifOutOctets,ifInUcastPkts,ifOutUcastPkts,ifInNUcastPkts,ifOutNUcastPkts' , 1000000 )
-				,local:td-att-oidCSV( 'style="color:#900000"' , $if , 'ifInDiscards,ifOutDiscards,ifInErrors,ifOutErrors' )
-				,local:td-oidCSV( $if , 'ifInUnknownProtos,ifOutQLen' )
+				local:td(		''	, $ifIndex )
+				,local:td-oidCSV(	''	, $if		, 'ifDescr,ifType' )
+				,local:td-oidCSV-scale(	''	, $if		, 'ifSpeed,ifInOctets,ifOutOctets,ifInUcastPkts,ifOutUcastPkts,ifInNUcastPkts,ifOutNUcastPkts'	, 1000000 )
+				,local:td-oidCSV(	$red	, $if		, 'ifInDiscards,ifOutDiscards,ifInErrors,ifOutErrors' )
+				,local:td-oidCSV(	''	, $if		, 'ifInUnknownProtos,ifOutQLen' )
 				)}
 			</tr>
 			} 
@@ -233,7 +252,7 @@ declare function local:get-offset(){
 
 		<br/>
 
-		<table border="0" style="width:100%; background-color: white;">		<!-- split into wo columns -->
+		<table border="0" style="width:100%; background-color: white;">		<!-- split into two columns -->
 			<tr>
 				<td valign="top">
 					<h2>TCP Connection Table</h2>
@@ -245,8 +264,8 @@ declare function local:get-offset(){
 						return
 						<tr class="{ if(($row mod 2) = 0) then 'even' else 'odd' }">
 							{(
-							local:td-attCSV( $tcpConnState , 'index1,index2,index3,index4' )
-							,local:td( '' , $tcpConnState/text() )
+							local:td-attCSV(	''	, $tcpConnState	, 'index1,index2,index3,index4' )
+							,local:td(		''	, $tcpConnState/text() )
 							)}
 						</tr>
 						} 
@@ -257,30 +276,29 @@ declare function local:get-offset(){
 						{ local:pc-make-table-headings( ( 'Packets-In|Out' , 'Requests-In' , 'Get-Nexts|Responses-In|Out' ) ) }
 						<tr class="odd">
 							{
-							local:td-child-valueCSV( $doc//snmp , 'snmpInPkts,snmpOutPkts,snmpInTotalReqVars,snmpInGetNexts,snmpOutGetResponses' )
+							local:td-childCSV-value( '' , $doc//snmp , 'snmpInPkts,snmpOutPkts,snmpInTotalReqVars,snmpInGetNexts,snmpOutGetResponses' )
 							}
 						</tr>
 					</table>
 
 					<h2>IP Media Table</h2>
 					<table border="1">
-						{ local:pc-make-table-headings( ( 'Interface' , 'MAC-Address' , 'IP Address' , 'Media-Type' , 'Connections' ) ) }
+						{ local:pc-make-table-headings( ( 'Interface' , 'MAC-Address' , 'IP Address' , 'Media-Type' , 'Current-Connections' ) ) }
 						{
-						let $ipNet	:= $doc//ipNetToMediaTable/ipNetToMediaEntry				(: get all the media table entries :)
+						let $ipNet	:= $doc//ipNetToMediaTable/ipNetToMediaEntry					(: get all the media table entries :)
 						let $tcp	:= $doc//tcp/tcpConnTable/tcpConnEntry
 						let $offset	:= local:get-offset()
 
-						for $ip at $row in $ipNet/ipNetToMediaNetAddress/value/text()				(: for each ip address :)
-						let $e		:= $ipNet//value	[ @index2 = $ip ]					(: get the OIDs for each entry :)
-						let $iIndex	:= string( number( $e[ @oid = 'ipNetToMediaIfIndex' ] ) - $offset )						(: adjust it if required :)
-
+						for $ip at $row in $ipNet/ipNetToMediaNetAddress/value/text()					(: for each ip address :)
+							let $e		:= $ipNet//value	[ @index2 = $ip ]				(: get the OIDs for each entry :)
+							let $iIndex	:= string( number( $e[ @oid = 'ipNetToMediaIfIndex' ] ) - $offset )	(: adjust it if required :)
 						return
 						<tr class="{ if(($row mod 2) = 0) then 'even' else 'odd' }">				<!-- shade row -->
 							{(
-							local:td( '' , $iIndex )
-							,local:td-oidCSV( $e , 'ipNetToMediaPhysAddress' )
-							,local:td( '' , $ip )
-							,local:td-oidCSV( $e , 'ipNetToMediaType' )
+							local:td( 		''	, $iIndex )
+							,local:td-oidCSV( 	''	, $e	, 'ipNetToMediaPhysAddress' )
+							,local:td(		''	, $ip )
+							,local:td-oidCSV(	''	, $e	, 'ipNetToMediaType' )
 							)}
 							<td>
 							{
@@ -289,12 +307,11 @@ declare function local:get-offset(){
 								{ local:pc-make-table-headings( ( 'Local-IP|Port' , 'Remote-Port' , 'Status' ) ) }
 								{
 								for $tcpConnState at $row in $tcp/tcpConnState/value[ @index3 = $ip ]
-	
 								return
 								<tr class="{ if(($row mod 2) = 0) then 'even' else 'odd' }">
 									{(
-									local:td-attCSV( $tcpConnState , 'index1,index2,index4' )
-									,local:td( '' , $tcpConnState/text() )
+									local:td-attCSV(	''	, $tcpConnState		, 'index1,index2,index4' )
+									,local:td(		''	, $tcpConnState/text() )
 									)}
 								</tr>
 								} 
@@ -309,13 +326,11 @@ declare function local:get-offset(){
 					<h2>UDP Statistics</h2>
 					<table border="1">
 						{ local:pc-make-table-headings( ( 'Datagrams-In|Out' , 'No-Ports' , 'Errors-In' ) ) }
-						{
 						<tr class="odd">
 							{
-							local:td-child-valueCSV( $doc//udp , 'udpInDatagrams,udpOutDatagrams,udpNoPorts,udpInErrors' )
+							local:td-childCSV-value( '' , $doc//udp , 'udpInDatagrams,udpOutDatagrams,udpNoPorts,udpInErrors' )
 							}
 						</tr>
-						} 
 					</table>
 
 					<h2>TCP Statistics</h2>
@@ -323,7 +338,7 @@ declare function local:get-offset(){
 						{ local:pc-make-table-headings( ( 'Segments-In|Out' , 'Retrans' , 'Errors-In' , 'RTO-Algorithm|Min|Max' , 'Opens-Active|Passive' , 'Attempt-Fails' , 'Estab-Resets' , 'Rsts-Out' ) ) }
 						<tr class="odd">
 							{
-							local:td-child-valueCSV( $doc//tcp , 'tcpInSegs,tcpOutSegs,tcpRetransSegs,tcpInErrs,tcpRtoAlgorithm,tcpRtoMin,tcpRtoMax,tcpActiveOpens,tcpPassiveOpens,tcpAttemptFails,tcpEstabResets,tcpOutRsts' )
+							local:td-childCSV-value( '' , $doc//tcp , 'tcpInSegs,tcpOutSegs,tcpRetransSegs,tcpInErrs,tcpRtoAlgorithm,tcpRtoMin,tcpRtoMax,tcpActiveOpens,tcpPassiveOpens,tcpAttemptFails,tcpEstabResets,tcpOutRsts' )
 							}
 						</tr>
 					</table>
@@ -337,10 +352,10 @@ declare function local:get-offset(){
 						let $udp	:= $doc//udp/udpTable/udpEntry
 						for $udpLocalAddress at $row in $udp/udpLocalAddress/value
 						return
-						<tr class="{ if(($row mod 2) = 0) then "even" else "odd" }">
+						<tr class="{ if(($row mod 2) = 0) then 'even' else 'odd' }">
 							{(
-							local:td( '' , $udpLocalAddress/text() )
-							,local:td( '' , string( $udpLocalAddress/@index2 ) )
+							local:td(	''	, $udpLocalAddress/text() )
+							,local:td(	''	, string( $udpLocalAddress/@index2 ) )
 							)}
 						</tr>
 						} 
