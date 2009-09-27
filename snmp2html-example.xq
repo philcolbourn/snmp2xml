@@ -58,13 +58,24 @@ declare function local:td( $att , $value ){
 	</td>
 };
 
+declare function local:hide( $v ){
+	translate( $v , "0123456789abcdefABCDEF" , "5555555555eeeeeeeeeeee" )
+};
+
 (: make a td element from an attribute of an element :)
 (: eg <element a="10">20</element> returns <td>10</td> :)
 
 declare function local:td-att( $att , $element , $attName ){
 	<td fn="local:td-att(a,e,{$attName})">
 		{ local:make-attributes( $att ) }
-		{ string( $element/@*[ local-name() = $attName ] ) }
+		{
+		if( starts-with( $attName , 'HIDE' ) ) then
+			let $n	:= substring-after( $attName , 'HIDE' )
+			let $v	:= string( $element/@*[ local-name() = $n ] )
+			return local:hide($v)
+		else
+			string( $element/@*[ local-name() = $attName ] )
+		}
 	</td>
 };
 
@@ -92,12 +103,17 @@ declare function local:td-child-value( $att , $base , $child ){
 (: eg <value oid="ifIndex">20</value> returns <td>10</td> :)
 
 declare function local:td-oid( $att , $base , $oid ){
-	let $d := $base[ @oid = $oid ]/text()
-	return
-		<td fn="td-att-oid(a,b,{$oid})">
-			{ local:make-attributes( $att ) }
-			{ $d }
-		</td>
+	<td fn="td-att-oid(a,b,{$oid})">
+		{ local:make-attributes( $att ) }
+	{
+	if( starts-with( $oid , 'HIDE' ) ) then
+		let $n	:= substring-after( $oid , 'HIDE' )
+		let $v	:= $base[ @oid = $n ]/text()
+		return local:hide($v)
+	else
+		$base[ @oid = $oid ]/text()
+	}
+	</td>
 };
 
 declare function local:td-oid-scale( $att , $base , $oid , $scale ){
@@ -180,11 +196,11 @@ declare function local:class( $name ){
 			return
 			<tr class="{ if(($row mod 2) = 0) then 'even' else 'odd' }">
 				{(
-				local:td( 		''				, $rIndex )
+				local:td( 		''				, local:hide($rIndex) )
 				,local:td-oidCSV(	''				, $r 		, 'ipRouteMask,ipRouteType,ipRouteNextHop' )
 				,local:td(		''				, $ifIndex )
 				,local:td(		$offsetColor			, $offset )
-				,local:td-oidCSV( 	''				, $if 		, 'ifDescr,ifPhysAddress,ifMtu' )
+				,local:td-oidCSV( 	''				, $if 		, 'ifDescr,HIDEifPhysAddress,ifMtu' )
 				,local:td-oidCSV-scale(	''				, $if 		, 'ifSpeed,ifInOctets,ifOutOctets' , 1000000 )
 				,local:td(		local:class( $ifAdminStatus )	, $ifAdminStatus )
 				,local:td(		local:class( $ifOperStatus )	, $ifOperStatus )
@@ -211,13 +227,13 @@ declare function local:class( $name ){
 				let $ifAdminStatus	:= $if				[ @oid		= 'ifAdminStatus'	]/text()
 				let $ifOperStatus	:= $if				[ @oid		= 'ifOperStatus'	]/text()
 				let $offsetColor	:= concat( 'style="color:' , if($offset=0) then '#009000' else '#900000' , '"' )
-				let $routes		:= for $d in $r return ( string($d) , <br/> )
+				let $routes		:= for $d in $r return ( local:hide(string($d)) , <br/> )
 			return
 			<tr class="{ if(($row mod 2) = 0) then 'even' else 'odd' }">
 				{(
 				local:td(		''				, $ifIndex )
 				,local:td(		$offsetColor			, $offset )
-				,local:td-oidCSV(	''				, $if			, 'ifDescr,ifType,ifPhysAddress,ifMtu' )
+				,local:td-oidCSV(	''				, $if			, 'ifDescr,ifType,HIDEifPhysAddress,ifMtu' )
 				,local:td-oidCSV-scale(	''				, $if			, 'ifSpeed,ifInOctets,ifOutOctets'	, 1000000 )
 				,local:td(		local:class( $ifAdminStatus )	, $ifAdminStatus )
 				,local:td(		local:class( $ifOperStatus )	, $ifOperStatus )
@@ -264,7 +280,7 @@ declare function local:class( $name ){
 						return
 						<tr class="{ if(($row mod 2) = 0) then 'even' else 'odd' }">
 							{(
-							local:td-attCSV(	''	, $tcpConnState	, 'index1,index2,index3,index4' )
+							local:td-attCSV(	''	, $tcpConnState	, 'index1,index2,HIDEindex3,index4' )
 							,local:td(		''	, $tcpConnState/text() )
 							)}
 						</tr>
@@ -296,8 +312,8 @@ declare function local:class( $name ){
 						<tr class="{ if(($row mod 2) = 0) then 'even' else 'odd' }">				<!-- shade row -->
 							{(
 							local:td( 		''	, $iIndex )
-							,local:td-oidCSV( 	''	, $e	, 'ipNetToMediaPhysAddress' )
-							,local:td(		''	, $ip )
+							,local:td-oidCSV( 	''	, $e	, 'HIDEipNetToMediaPhysAddress' )
+							,local:td(		''	, local:hide($ip) )
 							,local:td-oidCSV(	''	, $e	, 'ipNetToMediaType' )
 							)}
 							<td>
