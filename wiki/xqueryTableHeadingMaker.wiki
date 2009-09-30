@@ -93,6 +93,8 @@ Octets-In|Out-MBytes|MBytes','State-Admin|Oper' ) )
 
 This generates the following table heading rows:
 
+(The row attributes are for debugging purposes only)
+
 <table border="1"> 
          <tr row="1"> 
             <th colspan="1" rowspan="3">Route</th> 
@@ -133,19 +135,18 @@ The code is included as an XQuery function in `snmp2html-example.xq` and listed 
 
 {{{
 declare function local:pc-make-table-headings( $headings ){
-        let $maxRows := max( for $h in $headings return count( tokenize($h, '-') ) ) 
-        (: determine most rows :)
-        let $maxCols := max( for $h in $headings, $r in tokenize($h,'-') return count( tokenize($r,'\|') ) )     (: determine most columns :) 
+        let $maxRows    := max( for $h in $headings                             return count( tokenize($h, '-') ) )     (: determine most rows :)
+        let $maxCols    := max( for $h in $headings, $r in tokenize($h,'-')     return count( tokenize($r,'\|') ) )     (: determine most columns :) 
 
-        for $row in 1 to $maxRows                                            (: step through each row :)
+        for $row in 1 to $maxRows                                                                               (: step through each row :)
         return
         <tr row="{ $row }">
                 {
-                for $h in $headings                                                 (: for each heading :)
-                        let $rows := count( tokenize($h,'-') )           (: determine rows :)
-                        let $maxCols := max( for $r in tokenize($h,'-') return count( tokenize($r,'\|') ) )  (: determine most columns for this heading :) 
-                        let $base       := $maxRows idiv $rows              (: calc min rowspan :)
-                        let $rem        := $maxRows mod $rows             (: keep remainder :)
+                for $h in $headings                                                                             (: for each heading :)
+                        let $rows       := count( tokenize($h,'-') )                                            (: determine rows :)
+                        let $maxCols    := max( for $r in tokenize($h,'-') return count( tokenize($r,'\|') ) )  (: determine most columns for this heading :) 
+                        let $base       := $maxRows idiv $rows                                                  (: calc min rowspan :)
+                        let $rem        := $maxRows mod $rows                                                   (: keep remainder :)
                         (:      start at heading index 1                                                        :)
                         (:      heading index increments at a slower rate                                       :)
                         (:      the rate is the number of heading rows for this column / maximum heading rows   :)
@@ -160,7 +161,7 @@ the  :)
 )
                         for $c in tokenize($r,'\|')                                                             (: split row into columns :)
                         return
-                                if( $this != $last ) then                                                               (: if the heading index different to the
+                                if( $this != $last ) then                                                       (: if the heading index different to the
  last one :)
                 <th rowspan="{ $rowSpan }" colspan="{ $colSpan }">{ $c }</th>                                   (: output column heading:)
                                 else ()
