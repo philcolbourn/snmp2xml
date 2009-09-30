@@ -78,11 +78,11 @@ which produces something like this:
 
 = An Easier Way =
 
-I working on the `SNMP2HTML` example I experimented with developing a function to generate nice looking table headings using XQuery. The technique could easily be ported to any web scripting language if desired.
+While working on the `SNMP2HTML` XQuery example I experimented with developing a function to generate nice looking table headings using XQuery. The technique could easily be ported to any web scripting language if desired.
 
 == How It Works ==
 
-The idea is to describe the column headings as a list using a simple syntax. In the list each column heading is an element and each element consists of rows separated by `'-'` and each row is divided into columns with a `'|'`.
+The idea is to describe the column headings as a list using a simple syntax. In the list each column heading is an element and each element consists of rows separated by `'-'` and each row is divided into columns with a `'|'`. These delimiters could be changed to suit specific needs.
 
 === Example ===
 
