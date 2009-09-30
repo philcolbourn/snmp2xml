@@ -93,8 +93,6 @@ Octets-In|Out-MBytes|MBytes','State-Admin|Oper' ) )
 
 This generates the following table heading rows:
 
-(The row attributes are for debugging purposes only)
-
 <table border="1"> 
          <tr row="1"> 
             <th colspan="1" rowspan="3">Route</th> 
