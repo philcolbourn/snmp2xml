@@ -5,15 +5,21 @@
 HTML headings are generally written like this:
 
 {{{
-<tr>
-  <th>ID</th>
-  <th>MAC Address</th>
-</tr>
+<table border="1">
+  <tr>
+    <th>ID</th>
+    <th>MAC</th>
+  </tr>
+  <tr>
+    <th></th>
+    <th>Address</th>
+  </tr>
+</table>
 }}}
 
 which produces something like this:
 
-<table>
+<table border="1">
   <tr>
     <th>ID</th>
     <th>MAC</th>
@@ -27,19 +33,21 @@ which produces something like this:
 But sometimes you want a multi-line heading so the table columns are not too wide. To do this you might write something like this:
 
 {{{
-<tr>
-  <th>ID</th>
-  <th>MAC</th>
-</tr>
-<tr>
-  <th></th>
-  <th>Address</th>
-</tr>
+<table border="1">
+  <tr>
+    <th>ID</th>
+    <th>MAC</th>
+  </tr>
+  <tr>
+    <th></th>
+    <th>Address</th>
+  </tr>
+</table>
 }}}
 
 which produces something like this:
 
-<table>
+<table border="1">
   <tr>
     <th>ID</th>
     <th>MAC</th>
@@ -53,18 +61,20 @@ which produces something like this:
 or you might prefer this:
 
 {{{
-<tr>
-  <th rowspan="2">ID</th>
-  <th>MAC</th>
-</tr>
-<tr>
-  <th>Address</th>
-</tr>
+<table border="1">
+  <tr>
+    <th rowspan="2">ID</th>
+    <th>MAC</th>
+  </tr>
+  <tr>
+    <th>Address</th>
+  </tr>
+</table>
 }}}
 
 which produces something like this:
 
-<table>
+<table border="1">
   <tr>
     <th rowspan="2">ID</th>
     <th>MAC</th>
