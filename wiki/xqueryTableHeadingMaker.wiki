@@ -13,7 +13,16 @@ HTML headings are generally written like this:
 
 which produces something like this:
 
-|| ID || MAC Address ||
+<table>
+  <tr>
+    <th>ID</th>
+    <th>MAC</th>
+  </tr>
+  <tr>
+    <th></th>
+    <th>Address</th>
+  </tr>
+</table>
 
 But sometimes you want a multi-line heading so the table columns are not too wide. To do this you might write something like this:
 
@@ -30,10 +39,6 @@ But sometimes you want a multi-line heading so the table columns are not too wid
 
 which produces something like this:
 
-|| ID || MAC ||
-|| || Address ||
-
-`
 <table>
   <tr>
     <th>ID</th>
@@ -44,6 +49,27 @@ which produces something like this:
     <th>Address</th>
   </tr>
 </table>
-`
 
+or you might prefer this:
 
+{{{
+<tr>
+  <th rowspan="2">ID</th>
+  <th>MAC</th>
+</tr>
+<tr>
+  <th>Address</th>
+</tr>
+}}}
+
+which produces something like this:
+
+<table>
+  <tr>
+    <th rowspan="2">ID</th>
+    <th>MAC</th>
+  </tr>
+  <tr>
+    <th>Address</th>
+  </tr>
+</table>
