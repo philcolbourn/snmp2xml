@@ -3,7 +3,7 @@
 # Base on code from http://klikclient.googlecode.com/svn/trunk/client/trunk/klik-svn2tar
 
 NAME="snmp2xml"
-RELEASE="0"				# still beta
+RELEASE="1"				# ready for use
 
 # make a temp directory
 t=$(mktemp -d ${NAME}-${RELEASE}.XXX) || ( echo "ERROR: could not make temporary directory" && exit 1 )
