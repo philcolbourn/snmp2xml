@@ -1,0 +1,74 @@
+# Introduction #
+
+To convert the output of snmpget into an XML format.
+
+
+# Details #
+
+An output of snmpget, snmpwalk or snmpbulkwalk might look like this:
+(assuming the -OXf options)
+
+```
+.iso.org.dod.internet.mgmt.mib-2.tcp.tcpConnTable.tcpConnEntry.tcpConnState[10.68.8.251][548][10.68.8.7][51998] = INTEGER: established(5)
+```
+
+It could be useful to convert this output into XML for further processing by XPath or XQuery to be used in some Network Manager.
+
+The XML output could look like this:
+
+```
+<iso>
+  <org>
+    <dod>
+      <internet>
+        <mgmt>
+          <mib-2>
+            <tcp>
+              <tcpConnTable>
+                <tcpConnEntry>
+                  <tcpConnState>
+                    <value oid="tcpConnState" type="INTEGER" index1="10.68.8.251" index2="548" index3="10.68.8.7" index4="51998" enum="5">established</value>
+                  </tcpConnState>
+...
+```
+
+This data might then be represented as a table.
+
+| Local Address | Local Port | Remote Address | Remote Port | State |
+|:--------------|:-----------|:---------------|:------------|:------|
+| 10.68.8.251 | 548 | 10.68.8.7 | 51998 | established |
+
+# SNMP Gateway #
+
+A web server on the network hosts an SNMP gateway.
+
+A link on a page is clicked which triggers the SNMP gateway using a URL like this:
+```
+http://the.gw.server/snmpgw/cgi-bin/snmp2html.cgi?host=a.router&community=public
+```
+
+A simple CGI perl script would perform the SNMP query, convert the SNMP output into XML, run an XQuery to create and return a web page displaying the results.
+
+This is a copy of the `snmp2html.cgi` file in `snmp2xml`. It uses a small script file to process the XQuery from `snmp2html-example.xq`.
+
+```
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use CGI::Minimal;
+
+print "Content-type: text/html\n\n";
+
+my $cgi = CGI::Minimal->new;
+
+my $b = "../../svn/snmp2xml";
+my $host = $cgi->param('host');
+my $community = $cgi->param('community');
+
+my $snmp = `/sw/bin/snmpbulkwalk -v2c -c$community -OXf $host mib-2 | /sw/bin/awk -f $b/snmp2xml-2.awk | $b/saxonb-xquery.sh $b/snmp2html-example.xq`;
+print $snmp;
+```
+
+Note: To use this script, adjust the paths for `snmpbulkwalk` and `awk`.

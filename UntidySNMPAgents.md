@@ -1,0 +1,82 @@
+# Dirty Data #
+
+In testing against 6 SNMP agents it has been found that they don't always output nice SNMP data.
+
+The `snmp2xml` awk script can now process SNMP output that has the following attributes:
+
+  * Adjacent duplicate SNMP output
+  * New-line characters in SNMP output
+  * Carriage-return characters in SNMP output
+  * Graphic characters above 0x7F such as 0xFF
+
+# Old Work-Around #
+
+**NOTE: This is no longer required.**
+
+To work around these issues the SNMP agent output can be put through `fix-snmp-output.awk` to tidy it up.
+
+## Duplicate Lines ##
+
+One SNMP agent tested returned each line twice. To fix this the output can be passed through **NIX uniq.**
+
+```
+cat file.snmp | uniq
+```
+
+## New-line Characters ##
+
+**NOTE: This is no longer required.**
+
+Another SNMP agent output new-line characters as part of the returned value. The output was like this:
+
+```
+.iso.org.dod.internet.mgmt.mib-2.host.hrSWRun.hrSWRunTable.hrSWRunEntry.hrSWRunName[4592] = Hex-STRING: 6A 61 76 61 00 00 00 00 00 00 00 00 00 00 00 00 
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+```
+
+To fix this `fix-snmp-output.awk` removes the new-line characters which modifies it to this:
+
+```
+.iso.org.dod.internet.mgmt.mib-2.host.hrSWRun.hrSWRunTable.hrSWRunEntry.hrSWRunName[4592] = Hex-STRING: 6A 61 76 61 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 
+```
+
+## Wrong Table Indexes ##
+
+Another agent makes reference to interfaces but is off by 1.
+
+In the SNMP output below, `lo0` is `ifDescr[3]` and `ifIndex[3]` is `3` but later in the output the route entry for `127.0.0.1` (and others) refer to `ifIndex` `4` instead.
+
+```
+.iso.org.dod.internet.mgmt.mib-2.interfaces.ifNumber.0 = INTEGER: 5
+.iso.org.dod.internet.mgmt.mib-2.interfaces.ifTable.ifEntry.ifIndex[1] = INTEGER: 1
+.iso.org.dod.internet.mgmt.mib-2.interfaces.ifTable.ifEntry.ifIndex[2] = INTEGER: 2
+.iso.org.dod.internet.mgmt.mib-2.interfaces.ifTable.ifEntry.ifIndex[3] = INTEGER: 3
+.iso.org.dod.internet.mgmt.mib-2.interfaces.ifTable.ifEntry.ifIndex[4] = INTEGER: 4
+.iso.org.dod.internet.mgmt.mib-2.interfaces.ifTable.ifEntry.ifIndex[5] = INTEGER: 5
+.iso.org.dod.internet.mgmt.mib-2.interfaces.ifTable.ifEntry.ifDescr[1] = STRING: gec0
+.iso.org.dod.internet.mgmt.mib-2.interfaces.ifTable.ifEntry.ifDescr[2] = STRING: mv0
+*.iso.org.dod.internet.mgmt.mib-2.interfaces.ifTable.ifEntry.ifDescr[3] = STRING: lo0*
+.iso.org.dod.internet.mgmt.mib-2.interfaces.ifTable.ifEntry.ifDescr[4] = STRING: wlan0
+.iso.org.dod.internet.mgmt.mib-2.interfaces.ifTable.ifEntry.ifDescr[5] = STRING: bridge0
+...
+.iso.org.dod.internet.mgmt.mib-2.ip.ipRouteTable.ipRouteEntry.ipRouteIfIndex[0.0.0.0] = INTEGER: 6
+.iso.org.dod.internet.mgmt.mib-2.ip.ipRouteTable.ipRouteEntry.ipRouteIfIndex[10.68.8.0] = INTEGER: 6
+.iso.org.dod.internet.mgmt.mib-2.ip.ipRouteTable.ipRouteEntry.ipRouteIfIndex[10.68.8.1] = INTEGER: 6
+.iso.org.dod.internet.mgmt.mib-2.ip.ipRouteTable.ipRouteEntry.ipRouteIfIndex[10.68.8.6] = INTEGER: 6
+.iso.org.dod.internet.mgmt.mib-2.ip.ipRouteTable.ipRouteEntry.ipRouteIfIndex[10.68.8.7] = INTEGER: 6
+.iso.org.dod.internet.mgmt.mib-2.ip.ipRouteTable.ipRouteEntry.ipRouteIfIndex[10.68.8.251] = INTEGER: 4
+.iso.org.dod.internet.mgmt.mib-2.ip.ipRouteTable.ipRouteEntry.ipRouteIfIndex[10.68.8.254] = INTEGER: 6
+.iso.org.dod.internet.mgmt.mib-2.ip.ipRouteTable.ipRouteEntry.ipRouteIfIndex[10.68.8.255] = INTEGER: 6
+*.iso.org.dod.internet.mgmt.mib-2.ip.ipRouteTable.ipRouteEntry.ipRouteIfIndex[127.0.0.0] = INTEGER: 4
+.iso.org.dod.internet.mgmt.mib-2.ip.ipRouteTable.ipRouteEntry.ipRouteIfIndex[127.0.0.1] = INTEGER: 4*
+.iso.org.dod.internet.mgmt.mib-2.ip.ipRouteTable.ipRouteEntry.ipRouteIfIndex[169.254.0.0] = INTEGER: 6
+```
+
+These errors are not corrected by `fix-snmp-output.awk` and `snmp2xml` does not fix them either.
+
+# Graphic Characters #
+
+`awk` and `gawk` don't like these characters in strings so the solution is messy.
+
+`mawk` may process them more easily, but in the interest of compatibility only `awk` will be used.
